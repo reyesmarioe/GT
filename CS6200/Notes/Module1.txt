@@ -1,0 +1,12 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-01-20T17:08:26-08:00
+
+====== Module1 ======
+Created Tuesday 20 January 2026
+
+==== What is an Operating System? ====
+	Software that abstracts and arbitrates the use of a computer system
+
+		Abstract 	- 	Simpliefies what the HW actually looks like
+		Arbitrates 	-	To manage, overseee, control HW use
