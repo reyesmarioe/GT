@@ -1,0 +1,211 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-01-27T21:10:23-08:00
+
+====== P1L2 - Intro to OS ======
+Created Tuesday 27 January 2026
+
+==== 2. Introduction to OS ====
+	OS like a shop manager:
+		* Directs operational resources:
+			* Control use of employee time, parts, tolls
+		* Enforces working policies:
+			* Fairnes, safety, clean-up
+		* Mitigates difficulty of complex tasks:
+			* simplifies operation & optimizes performance
+
+	The OS does:
+		* Direct opeartional resources
+			* Control use of CPU, memory, peripheral devices
+		* Enforce working policies:
+			* Fair resource access, limit to resource usage
+		* Mitigate difficulty of complex tasks:
+			* Abstract HW details (system calls)
+
+==== 3. What is an OS ====
+	Computer consists of CPU (multiple core), main memory, wifi card, GPU, disks:
+		HW used by multiple applications
+
+		OS sits between applications and hw
+
+		Applications
+		OS
+		HW
+
+	OS:
+		Hides hw complexity (how they are accessed to read/write a file, etc)
+		Resource management (Manages the HW)
+		Provide isolation & protectoin (Access to HW is managed correctly)
+
+==== 4. Operating System - Definition ====
+	An OS is a layer of SW that:
+		* Has priviledge access to HW
+		* Hides HW complexity
+		* Manages HW on behalf of application according to predefined policies
+		* Ensure applications are isolated and protected from one another.
+
+==== 5. OS Quiz ====
+	Likely components of an OS:
+		File system, Device Driver, Scheduler.
+
+==== 6. Abstraction or arbitration Quiz ====
+	Distributing memory between multiple processes -	Arbitration
+	Supporting different types of speakers - Abstraction
+	Interchangeable access of hard disk or SS - Abstraction
+
+==== 7. OS Examples ====
+	Desktop OSes
+		Windows
+		Unix-based
+			Max OS X (BSD)
+			Linux
+	Embedded
+		Android
+		iOS
+		Symbian
+
+==== 8. OS Elements ====
+	Abstractions
+		Process, thread, file, socket, memory page
+	Mechanisms
+		Create, schedule, open, write, allocate
+	Policies
+		Least Recently Used (LRU), Earliest Deadline First (EDF)
+	
+
+==== 9. OS Elements - Example ====
+	Memory management Example
+
+	Abstractions
+		Memory page (addresable region of memory, eg. 4K)
+	Mechanism
+		To operate on that page (Allocate in D-RAM and map to a process)
+		Process then can access the memory
+		Over time, this page can be move around in physical memory, or even
+		moved to physical disk if need to make RAM available for other processes
+	Policies
+		Least Recently Used - LRU
+			OS Policy to move pages from RAM to Disk (Swapping - DRAM to Disk and Viceversa)
+
+
+	{{./pasted_image001.png}}
+	
+		
+==== 10. OS Design Pricinples ====
+	Separation of mechanism & policy
+		Implement flexibl mechanisms to support many policies
+		e.g. LRU, LFU, random
+
+	Optimize for common case
+		Where will OS be used?
+		What will be executed on that machine?
+		What workload requirements?
+
+==== 11. OS Protection Boundary ====
+	OS operates in Privileged Mode
+	User Level - Unprivileged Mode
+
+	User-Kernel Switch
+		Supported by HW
+			Trap instructions
+			System Call - Open, Send, mmap
+
+	{{./pasted_image002.png}}
+
+==== 12. System Call Flowchart ====
+	Executing User Process
+		System Call
+			Changes execution context from User proces to OS Kernel (How?)
+			Passes arguments for system call (Where, How)
+			Jump to some location in the kernel's memory to execute instruction for system call.
+			After system call completion, return result and control to calling process.
+				changes context from Kernel to user mode
+			System call is an expensive operation
+	{{./pasted_image003.png}}
+==== = ====
+==== 13. Crossing the OS boundary ====
+	
+
+
+	{{./pasted_image004.png}}
+
+==== 14. OS Services ====
+	Scheduler - Access to CPU
+	Memroy manager - Allocating physical memory, make sure applications don't overwrite memory
+	Block Device Driver - Access to disk, wifi, etc.
+	File system
+	Process management
+	File Management
+	Device management
+	Memory management
+	Storage ..
+	Security
+==== = ====
+	{{./pasted_image005.png}}
+
+==== 15. System Call Quiz ====
+
+	Send signal to a process			kill
+	Set group identity of a process	setgid
+	Mount a filesystem				mount
+	Read/write system parameters	sysctl
+		
+			
+==== 16. Monolithic OS ====
+	Every service is part of the OS.
+
+	Advantages:
+		Everything is included.
+		Inline compile time optimizations
+
+	Disadvantages
+		Customization, portability, memory footprint
+
+==== 17. Modular OS ====
+	Basic services are part of OS. Rest can be added as a module.
+	Modules are installed dynamically.
+	{{./pasted_image006.png}}
+
+==== 18. [[MicroKernel]] ====
+	Only most basic elements in OS.
+	{{./pasted_image007.png}}
+
+==== 19. Linux and Mac OS Arch ====
+	{{./pasted_image008.png}}
+
+	{{./pasted_image009.png}}
+
+	{{./pasted_image010.png}}
+
+
+==== 20. Intro to OS Summary ====
+==== 21. Intro to OS Review ====
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

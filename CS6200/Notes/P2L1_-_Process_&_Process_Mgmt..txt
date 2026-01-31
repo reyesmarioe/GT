@@ -1,0 +1,320 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-01-28T08:13:54-08:00
+
+====== P2L1 - Process & Process Mgmt. ======
+Created Wednesday 28 January 2026
+
+==== 1. Preview ====
+	What is a process?
+	How OS represent a process?
+
+	Process - Instance of an executing program
+
+==== 2. Visual Metaphor ====
+	{{./pasted_image001.png}}
+==== = ====
+==== 3. What is a process? ====
+	Application - Program on disk, static entity
+
+	Process - State of a program when executing, loaded in memory, active entity.
+
+==== 4. What does a process look like? ====
+	Process encapsulates stack, heap, data, text (code).
+		This is also called the address space of a process.
+
+		Text - Static staten when process first loads
+		Heap - Dynamically created during execution
+		Stack - Grows and shring (LIFO) during execution.
+
+==== 5. Process address space ====
+	Address space - in memory representation of a process.
+						Memory uses virtual addresses, because they dont have to correspond to
+						actual location in physical memory.
+
+	**Vo - Vmax = Address space**
+
+	Memory Managment HW and OS maintain a mapping (**Page Tables**) b/w Virtual Addresses and Physiscal Addresses.
+
+	By using this memory mapping, it decouples the data in the process on how it's represented in physical memory
+	It allows to maintain physical memory management simple, it's not dictated by data layout of the executing process.
+
+	{{./pasted_image002.png}}
+
+
+==== 6. Address Space and Memory mgmt. ====
+	Parts of VA may not be allocated
+	Maybe not enough physical memory for all process state
+
+	32bit long address = 4GB.
+
+	OS dynamically decides which portion of VA will be present in PM.
+
+	{{./pasted_image003.png}}
+
+==== 7. Virtual Address quiz ====
+	
+	{{./pasted_image005.png}}
+
+	
+==== 8. Process execution state ====
+	How does OS knows what a process is doing?
+
+	Program Counter - Maintained on a CPU register.
+	CPU Registers
+	Stack Pointer - Process stack
+
+	Process Control Block (PCB)
+
+	{{./pasted_image006.png}}
+==== 9. Process Control Block ====
+	Is a data structure maintain by the OS for every process
+	Created and initialized when the process is created
+
+	Some fields are updated when process state changes
+	Other fields change too frequently.
+
+	{{./pasted_image008.png}}
+==== 10. How is a PCM used? ====
+	While P1 is runnig, CPU regs holds values of PCB.P1
+	When P1 is interrupted, OS saves PCB.P1.
+	Then P2 start runnig, the OS updates the CPU registers with PCB.P2
+
+	Context switch - Saving PCB values for 1 process and restoring PCB values for other process so that i can start running.
+	{{./pasted_image009.png}}
+
+==== 11. Context Switch ====
+	Mechanism used by the OS to switch the execution from one proces to other process.
+
+	This is an expensive of operation
+		Direct cost - Number of cycles for load 2 store instructions
+		Indirect cost - COLD cache misses.
+
+	{{./pasted_image010.png}}
+
+==== 12. Hot Cache Quiz ====
+	{{./pasted_image011.png}}
+
+	{{./pasted_image012.png}}
+
+==== 13 Process Lifecycle States ====
+	Processes can be:
+		Running or Idle
+
+	
+	When processes is created is in state NEW
+		Creates PCB, checks permissions and available resources
+	If all ok, it moves to READY. 
+		Ready to start executing, It waits in this state until scheduler is ready to move it to a RUNNING state
+	When process is scheduled on CPU by scheduler it is now on RUNNING state.
+	From here, the process could be:
+		Interrupted, which will move the process to a READY state. OR
+		If process needs to wait for a long process to complete, it's moved to a WAITING state
+			Once operation completes it moves to READY state.
+	Once the process completes its execution of fails due to error, it will moved to TERMINATED state.
+	{{./pasted_image013.png}}
+
+==== 14. Process State Quiz ====
+	{{./pasted_image014.png}}
+
+	READY state
+	{{./pasted_image015.png}}
+
+	
+==== 15. Process Lifecyce - Creation ====
+	Process can create child processes.
+
+	Mechanism for process creation
+
+		**fork**
+			Copies the parent PCB into new child PCB
+			Child continues execution at instruction after fork
+
+		**exec**
+			replace child imap
+			load new program and start from first instrucion
+
+	{{./pasted_image016.png}}
+
+	
+==== 16. Parent Process Quiz ====
+	{{./pasted_image017.png}}
+
+	Init
+	Zygote
+	{{./pasted_image018.png}}
+
+==== 17. Role of the CPU scheduler ====
+	Multiple ready process in queue. Which one to run?
+
+	CPU Scheduler determines which one of the currently ready processes will be dispatched to the
+	cpu to start running and how long it should run for.
+
+	**preempt** - Interrupt and save current context
+	**Schedule** - Run scheduler to choose next process
+	**Dispatch** - Dispatch processes and swtich into its context
+
+	OS Must be efficient. Should minimize time running above processes.
+
+	{{./pasted_image019.png}}
+
+==== 18. Length of a process ====
+	How long should a process run for?
+	How frequently should we run the scheduler?
+
+	Timeslice - time Tp allocated to a process on the CPU
+	{{./pasted_image020.png}}
+
+==== 19. What about I/O? ====
+	{{./pasted_image021.png}}
+
+==== 20. Scheduler Responsibility Quiz ====
+	{{./pasted_image022.png}}
+	{{./pasted_image023.png}}
+
+==== 21. Inter Process Communication ====
+	IPC mechanisms
+		Transfer data/info between address spaces
+		Maitain protectin and Isolation
+		Provide flexibility and performance
+
+	{{./pasted_image024.png}}
+
+	Message Passing IPC
+
+	OS provides communication channel (shared buffer, etc)
+	Processes write/read msgs to/from channel
+	Advantages
+		OS manages the channel
+	Disadvantages
+		overhead, calling into the kernel
+	{{./pasted_image025.png}}
+
+	
+	Shared Memory IPC
+
+	OS establishes a shared channel and maps it into each process address space
+	Processes directly read/write from this memory
+
+	Advantages
+		OS is out of the way
+
+	Disadvantages
+		No standard way or set of api to use, code reimplementation
+		
+	{{./pasted_image026.png}}
+
+==== 22. Shared Memory Quiz ====
+	{{./pasted_image027.png}}
+
+	Depends
+	{{./pasted_image028.png}}
+
+==== 23. Summary ====
+	
+	
+	
+	
+
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+		
+		
+		
+		
+	
+	
+	
+
+	
+
+	
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+

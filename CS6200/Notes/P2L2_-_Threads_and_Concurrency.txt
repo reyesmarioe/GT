@@ -1,0 +1,266 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-01-28T20:24:23-08:00
+
+====== P2L2 - Threads and Concurrency ======
+Created Wednesday 28 January 2026
+
+==== 1. Preview ====
+	What threads are and how diff than processes
+	Birrel paper
+	
+==== 2. Visual metaphor ====
+	Thread is like worker in toy shop
+		Active entity
+			Executes a unit of work
+			
+		Works simltaneouly with others
+			Many workers completing orders
+			
+		Requires coordination
+			sharing tools, parts, workstations.
+
+
+	Threads
+		Active entity
+			executing unit of a process
+	 
+		Works simultaneously with others
+			many thread executing
+
+		requires coordination
+			sharing of I/O devices, CPUS, memory
+
+	{{./pasted_image.png}}
+
+
+==== 3. Process vs Threads ====
+	Process
+		Represented by address space
+		Address space contains all the virtual to physical mapping
+		Represented by it execution context:
+			Values of register, stack pointer, program counter
+
+		OS keeps all this info in the PCB
+
+	Threads
+		Represent multiple execution contexts
+		Part of the same address space, share virtual to phys mappings
+		Shared code, data, files
+
+		However, probably executed diff. instructions, access diff. portions of that address space.
+		Each thead has a different program counter, stack, thread-specific register.
+		Each thread needs different data structures to represent them.
+		**PCB** is more complex, includes per thread context data
+	{{./pasted_image001.png}}
+
+
+==== 4. Benefits of multithreading ====
+	**Parallelization**
+		Single process with multiple threads, each processing different data of an input array.
+		All threads execute the same code, but not necessarily the same instruction at some point
+		This speed up the processing of the input array (Parallelizatin processing)
+	**Specialization**
+		Multiple threads executing different portions of the code for specialized tasks.
+		Each thread can have its own priority, lower or higher
+		Possible to have hot cache, which gives higher performance.
+	**Efficiency**
+		Lower memory requirements, faster IPC
+
+	{{./pasted_image002.png}}
+
+==== 5. Benefits of multithreading, Single CPU ====
+	Threads useof on a single CPU?
+	Or when # threadds > # cpus?
+
+	If **t1_idle** > **2 * (t2_ctx_switch)** then
+		context switch to t2 to hide idling time
+
+	Threads context switch is lower than context switch of a process.
+		No VA to PA mapping on threads as threads share the VA space
+
+		**For context switch a process, there has to be a VA to PA mapping and this takes time.**
+
+	Hides latency on I/O operations
+
+	{{./pasted_image003.png}}
+
+==== 6. Benefits of multithreading, Apps and OS ====
+	
+	{{./pasted_image004.png}}
+
+==== 7. Process Vs threads quiz ====
+	{{./pasted_image005.png}}
+
+==== 8. Basic thread mechanisms ====
+	Thread data structure
+		Identify threads, keep track of resource usage
+
+	Mechanism to create and manage threads
+	Mechanism to safely coordinate among threads running concurrently in the same address space
+
+	{{./pasted_image006.png}}
+
+	Processes 
+		have their own address space and one process cannot access the memory of other running process
+
+	Threads
+		Can both access the same physical address, both can read/write from the same location.
+
+		This can lead to a **data race**
+
+	{{./pasted_image007.png}}
+
+	Concurrency control & Coordination
+
+	* Mutual Exclusion
+		* exclusive acces to only one thread at a time
+		* Mutex
+	* Waiting on other threads
+		* Specific condition before proceding
+		* Condition variables
+	* Waking up other thread from wait state
+	{{./pasted_image008.png}}
+
+	**Read Burrels doc**
+
+==== 9. Thread creation ====
+	Thread type
+		Thread data structure [thread id, PC, SP, registers, stack, attributes
+	Fork (proc, args) (different from Unix fork)
+		Create a thread
+		Not UNIX fork
+
+	Join (thread)
+		Terminate a thread
+
+	{{./pasted_image009.png}}
+
+==== 10. Thread Creation Example ====
+	{{./pasted_image010.png}}
+
+==== 11. Mutexes ====
+	{{./pasted_image011.png}}
+
+==== 12. Mutual exclusion ====
+	
+	Mutex is a lock, used whenever accessing shared data between concurrent threads.
+		Also called acquired mutex.
+
+		Mutex contains information about
+			status
+			blocked threads
+			owner
+
+	{{./pasted_image012.png}}
+
+
+	**Critical Section**
+		Portion of the code protected by the mutex
+		Any operation that only one thread can execute at any one time
+		After exiting the critical sectino, the mutex is release, other threads can the acquire the mutex
+
+	{{./pasted_image013.png}}
+
+	{{./pasted_image014.png}}
+
+==== 13. Mutex Example ====
+	{{./pasted_image015.png}}
+
+==== 14. Mutex Quiz ====
+	{{./pasted_image017.png}}
+	
+	{{./pasted_image016.png}}
+	
+==== 15. Producer/Consumer example ====
+	{{./pasted_image018.png}}
+
+	{{./pasted_image019.png}}
+	
+	Here, the consumer acquires the lock to check if the list is full to do some work. If list is not full, release the mutex
+	No point in doing this acquire, check, release to check on list condition.
+
+==== 16. Condition Variables ====
+	Control the behavior of concurrent threads.
+
+	Here the consumer acquires the lock and checks if list if full. If not, threads suspends itself and it enters the Wait state and releases the mutex.
+		Thread is then waiting on the Signal.
+		Once signal is received, it automatically acquires the mutex again, does some work and releases the mutex.
+
+		Consumer
+			Locks the mutex
+			Checks on condition
+			If condition not ready, suspend and Wait. Releases mutex
+			When signal received, locks mutex
+			Does its work
+			Releases the mutex
+
+	The producer keeps working and checking if the list is full. When it is, it Signals the waiting threads
+	
+	{{./pasted_image020.png}}
+==== 17. Condition Variable API ====
+	Note that on Broadcast condition, all threads are unlocked, however, only one thread will be able to 
+	lock the mutex
+	
+	{{./pasted_image021.png}}
+		
+==== 18. Condition Variable Quiz ====
+	{{./pasted_image022.png}}
+
+	
+	{{./pasted_image023.png}}
+
+==== 19. Reader/Writer problem ====
+	{{./pasted_image024.png}}
+
+==== 20. Reader/Writer Example Part 1 ====
+	{{./pasted_image026.png}}
+	
+==== 21. Reader/Writer Example Part 2 ====
+	{{./pasted_image027.png}}
+
+==== 22. ====
+	
+
+		
+			
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
