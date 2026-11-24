@@ -1,17 +1,73 @@
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class A35_PowerCompany extends JFrame {
+
+    /*
+     * Config file reader
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ConfigReader {
+        @JsonProperty("CompanyName")
+        private String companyName;
+
+        @JsonProperty("Owners")
+        private List<String> owners;
+
+        @JsonProperty("Consumers")
+        private Map<String, Integer> consumers;
+
+        @JsonProperty("ElectricityEvents")
+        private Map<String, Double> electricityEvents;
+
+        @JsonProperty("Employees")
+        private List<String> employees;
+
+        @JsonProperty("SystemEvents")
+        private List<String> systemEvents;
+
+        @JsonProperty("ElectricEventsPerCycle")
+        private int electricEventsPerCycle;
+
+        public String getCompanyName() { 
+            return companyName; 
+        }
+        public List<String> getOwners() { 
+            return owners; 
+        }
+        public Map<String, Integer> getConsumers() { 
+            return consumers; 
+        }
+        public Map<String, Double> getElectricityEvents() { 
+            return electricityEvents; 
+        }
+        public List<String> getEmployees() { 
+            return employees; 
+        }
+        public List<String> getSystemEvents() { 
+            return systemEvents; 
+        }
+        public int getElectricEventsPerCycle() { 
+            return electricEventsPerCycle; 
+        }
+    }
+
     // TODO: 
-    // We can define this in the config file instead.
+    // Will rely on config file instead of hardcoding here
     public enum CustomerType { LOW_CONSUMER, HIGH_CONSUMER }
 
-    // Simulates applicance usage. 
-    // Predefined events listed in config file.
     public static class ApplianceEvent {
         private final String name;
         private final double kwUsage;
@@ -21,15 +77,14 @@ public class A35_PowerCompany extends JFrame {
             this.kwUsage = kwUsage;
         }
 
-        public String getName() { return name; }
-        public double getKwUsage() { return kwUsage; }
+        public String getName() { 
+            return name; 
+        }
+        public double getKwUsage() { 
+            return kwUsage; 
+        }
     }
 
-    /*
-     * We will have two types of custmors:
-     *  LOW_CONSUMER
-     *  HIGH_CONSUMER
-     */
     public static class Customer {
         private final int id;
         private final String name;
@@ -60,8 +115,6 @@ public class A35_PowerCompany extends JFrame {
         }
     }
 
-    // This one is pretty straighforward. 
-    // We need to limit the # of transformers per substation to MAX_TRANSFORMERS (see config).
     public static class Transformer {
         private final int id;
         public Transformer(int id) { 
@@ -72,10 +125,13 @@ public class A35_PowerCompany extends JFrame {
         }
     }
 
-    // Pretty straightforward
     public static class Substation {
         private final int id;
         private final List<Transformer> transformers = new ArrayList<>();
+        /*
+         * TODO:
+         * Remove this and use read value from config
+         */
         public static final int MAX_TRANSFORMERS = 20;
 
         public Substation(int id) {
@@ -85,11 +141,14 @@ public class A35_PowerCompany extends JFrame {
             }
         }
 
-        public int getId() { return id; }
-        public List<Transformer> getTransformers() { return transformers; }
+        public int getId() { 
+            return id; 
+        }
+        public List<Transformer> getTransformers() { 
+            return transformers; 
+        }
     }
 
-    // Pretty straightforward
     public static class PowerStation {
         private final String name;
         private final List<Substation> substations = new ArrayList<>();
@@ -100,8 +159,12 @@ public class A35_PowerCompany extends JFrame {
             substations.add(new Substation(2));
         }
 
-        public String getName() { return name; }
-        public List<Substation> getSubstations() { return substations; }
+        public String getName() { 
+            return name; 
+        }
+        public List<Substation> getSubstations() { 
+            return substations; 
+        }
     }
 
     public static class Employee {
@@ -113,10 +176,11 @@ public class A35_PowerCompany extends JFrame {
             this.name = name;
         }
 
-        public String getName() { return name; }
+        public String getName() { 
+            return name; 
+        }
     }
 
-    // List of predefined issues listed in the config file.
     public static class MaintenanceIssue {
         private final int cycle;
         private final String issueType;
@@ -134,7 +198,9 @@ public class A35_PowerCompany extends JFrame {
             this.assignedWorker = assignedWorker;
         }
 
-        public double getFixCost() { return fixCost; }
+        public double getFixCost() { 
+            return fixCost; 
+        }
 
         @Override
         public String toString() {
@@ -145,38 +211,49 @@ public class A35_PowerCompany extends JFrame {
 
     public static class PowerCompany {
         private final String name;
+        private final ConfigReader config;
         private final PowerStation powerStation;
         private final List<Customer> customers = new ArrayList<>();
         private final List<Employee> employees = new ArrayList<>();
         private final List<MaintenanceIssue> issuesLog = new ArrayList<>();
 
-        public PowerCompany(String name) {
-            this.name = name;
-            this.powerStation = new PowerStation("Station # 1");
-            // Create customers 
-            initCustomers();
-            // Create employees 
+        /*
+         * This is the main class start
+         */
+        public PowerCompany(ConfigReader config) {
+            this.config = config;
+            this.name = config.getCompanyName(); 
+
+            // Remove this hardcode name
+            this.powerStation = new PowerStation("Station 1");
+
             initEmployees();
+            initCustomers();
         }
 
         private void initEmployees() {
-            employees.add(new Employee(101, "Alice Smith"));
-            employees.add(new Employee(102, "Bob Jones"));
-            employees.add(new Employee(103, "Charlie Davis"));
-        }
+
+                int id = 20;
+                for (String empName : config.getEmployees()) {
+                    employees.add(new Employee(id++, empName));
+                }
+            }
 
         private void initCustomers() {
-            // Need to read list from config file
-            // 5 Low Consumers
-            for (int i = 1; i <= 5; i++) {
-                customers.add(new Customer(i, "Low Consumer #" + i, CustomerType.LOW_CONSUMER));
-            }
-            // 5 High Consumers
-            for (int i = 6; i <= 10; i++) {
-                customers.add(new Customer(i, "High Consumer #" + i, CustomerType.HIGH_CONSUMER));
+            int id = 1;
+
+            for (Map.Entry<String, Integer> entry : config.getConsumers().entrySet()) {
+                CustomerType type = (entry.getValue() == 1) ? CustomerType.HIGH_CONSUMER : CustomerType.LOW_CONSUMER;
+                customers.add(new Customer(id++, entry.getKey(), type));
             }
         }
 
+        public ConfigReader getConfig() { 
+            return config; 
+        }
+        public String getName() { 
+            return name; 
+        }
         public List<Customer> getCustomers() { 
             return customers; 
         }
@@ -199,13 +276,13 @@ public class A35_PowerCompany extends JFrame {
         }
     }
 
+    private final ConfigReader config;
     private final PowerCompany powerCompany;
     private final List<ApplianceEvent> applianceEvents = new ArrayList<>();
     private final Random random = new Random();
     private int currentCycle = 0;
     private Timer simTimer;
 
-    // UI elements
     private JTextArea logTextArea;
     private JTextArea consumptionTextArea;
     private JTextArea issuesTextArea;
@@ -214,20 +291,18 @@ public class A35_PowerCompany extends JFrame {
     private JButton startButton;
     private JButton stopButton;
 
-    public A35_PowerCompany() {
-        super("A35 Power Company");
-        this.powerCompany = new PowerCompany("GT PW Inc.");
+    public A35_PowerCompany(ConfigReader config) {
+        super(config.getCompanyName());
+        this.config = config;
+        this.powerCompany = new PowerCompany(config);
         initApplianceEvents();
         setupUI();
     }
 
     private void initApplianceEvents() {
-        applianceEvents.add(new ApplianceEvent("Turn on LED Light", 0.015));
-        applianceEvents.add(new ApplianceEvent("Turn on TV", 0.15));
-        applianceEvents.add(new ApplianceEvent("Run Washing Machine", 0.50));
-        applianceEvents.add(new ApplianceEvent("Run Microwave", 1.20));
-        applianceEvents.add(new ApplianceEvent("Turn AC On", 3.50));
-        applianceEvents.add(new ApplianceEvent("EV Charging", 7.20));
+            config.getElectricityEvents().forEach((eventName, kw) -> {
+                applianceEvents.add(new ApplianceEvent(eventName, kw));
+            });
     }
 
     private void runMonthlyCycle() {
@@ -236,43 +311,35 @@ public class A35_PowerCompany extends JFrame {
 
         Substation sub = powerCompany.getPowerStation().getSubstations().get(0);
         Transformer trans = sub.getTransformers().get(0);
-        logTextArea.append(String.format("Power Grid Transmission: [%s] -> [Substation #%d] -> [Transformer #%d] -> [Grid Grid]\n",
-                powerCompany.getPowerStation().getName(), sub.getId(), trans.getId()));
+        logTextArea.append(String.format("Power Grid Transmission: [%s] -> [Substation #%d] -> [Transformer #%d] -> [Grid]\n",
+                    powerCompany.getPowerStation().getName(), sub.getId(), trans.getId()));
 
-        /* 
-         * Random customer consumption
-         */
-        int activeCustomersCount = random.nextInt(5) + 1; // 1 to 5 customers act this cycle
+        int activeCustomersCount = random.nextInt(Math.min(5, powerCompany.getCustomers().size())) + 1;
         for (int i = 0; i < activeCustomersCount; i++) {
             Customer c = powerCompany.getCustomers().get(random.nextInt(powerCompany.getCustomers().size()));
+            /*
+             * Need to create several events, not just one event per customer
+             */
             ApplianceEvent event = applianceEvents.get(random.nextInt(applianceEvents.size()));
 
-            // High consumers use multiplier
             double multiplier = (c.getType() == CustomerType.HIGH_CONSUMER) ? 2.5 : 1.0;
             double kwUsed = event.getKwUsage() * multiplier;
             c.consume(kwUsed);
 
             logTextArea.append(String.format("  - %s (%s) used '%s' consuming %.3f kW\n",
-                    c.getName(), c.getType(), event.getName(), kwUsed));
+                        c.getName(), c.getType(), event.getName(), kwUsed));
         }
 
-        /*
-         * Randomize issues per cycle
-         * Not all cycles will have issues
-         */
         if (random.nextBoolean()) {
-            String[] possibleIssues = { 
-                "Transformer Breakdown", 
-                "Cable Rupture", 
-                "Substation Surge", 
-                "Insulation Failure", 
-                "Tree Branch Short" 
-            };
+            List<String> systemEvents = config.getSystemEvents();
 
-            String issueName = possibleIssues[random.nextInt(possibleIssues.length)];
-            int fixTime = random.nextInt(120) + 15; // 15 to 135 mins
-            double fixCost = 150.0 + (random.nextDouble() * 1850.0); // $150 to $2000
-            Employee assigned = powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()));
+            String issueName = systemEvents.get(random.nextInt(systemEvents.size()));
+            int fixTime = random.nextInt(120) + 15;
+            double fixCost = 150.0 + (random.nextDouble() * 1850.0);
+
+            Employee assigned = !powerCompany.getEmployees().isEmpty() 
+                ? powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()))
+                : new Employee(999, "Unassigned Worker");
 
             MaintenanceIssue issue = new MaintenanceIssue(currentCycle, issueName, fixTime, fixCost, assigned);
             powerCompany.logIssue(issue);
@@ -288,7 +355,6 @@ public class A35_PowerCompany extends JFrame {
     private void updateSummaryViews() {
         cycleLabel.setText("Cycle: " + currentCycle);
 
-        // Update Customers Table View
         StringBuilder sbCons = new StringBuilder();
         sbCons.append(String.format("%-5s | %-16s | %-14s | %s\n", "ID", "Name", "Category", "Total Consumed (kW)"));
         sbCons.append("-----------------------------------------------------------------\n");
@@ -298,7 +364,6 @@ public class A35_PowerCompany extends JFrame {
         }
         consumptionTextArea.setText(sbCons.toString());
 
-        // Update Issues List View
         StringBuilder sbIssues = new StringBuilder();
         for (MaintenanceIssue issue : powerCompany.getIssuesLog()) {
             sbIssues.append(issue.toString()).append("\n");
@@ -307,13 +372,6 @@ public class A35_PowerCompany extends JFrame {
         totalCostLabel.setText(String.format("Total Repair Expenses: $%.2f", powerCompany.getTotalRepairCost()));
     }
 
-
-    /* 
-     * Simple Gui Design
-     * Let's keep this simple to avoid dealing with any GUI issues.
-     *
-     * I hate Java!
-     */
     private void setupUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 750);
@@ -323,8 +381,8 @@ public class A35_PowerCompany extends JFrame {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topPanel.setBackground(new Color(245, 245, 245));
 
-        startButton = new JButton("Start Simulation Loop");
-        stopButton = new JButton("Pause Simulation");
+        startButton = new JButton("Start Cycle Loop");
+        stopButton = new JButton("Pause Cycle Loop");
         JButton nextCycleButton = new JButton("Run Single Cycle");
         stopButton.setEnabled(false);
 
@@ -339,11 +397,9 @@ public class A35_PowerCompany extends JFrame {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // Center Split Layout
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplitPane.setResizeWeight(0.45);
 
-        // Left Panel: Real-time Simulation Logs
         logTextArea = new JTextArea();
         logTextArea.setEditable(false);
         logTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -351,7 +407,6 @@ public class A35_PowerCompany extends JFrame {
         logScroll.setBorder(new TitledBorder("Live Operations & Transmission Log"));
         mainSplitPane.setLeftComponent(logScroll);
 
-        // Right Panel: Summary Statistics
         JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
 
         consumptionTextArea = new JTextArea();
@@ -364,7 +419,7 @@ public class A35_PowerCompany extends JFrame {
         issuesTextArea.setEditable(false);
         issuesTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane issuesScroll = new JScrollPane(issuesTextArea);
-        
+
         JPanel issuesContainer = new JPanel(new BorderLayout());
         issuesContainer.setBorder(new TitledBorder("Maintenance & Employee Dispatch Log"));
         issuesContainer.add(issuesScroll, BorderLayout.CENTER);
@@ -380,10 +435,8 @@ public class A35_PowerCompany extends JFrame {
         mainSplitPane.setRightComponent(rightPanel);
         add(mainSplitPane, BorderLayout.CENTER);
 
-        // Timer setup (runs cycle every 1.5 seconds when started)
         simTimer = new Timer(1500, e -> runMonthlyCycle());
 
-        // Event Handlers
         startButton.addActionListener(e -> {
             simTimer.start();
             startButton.setEnabled(false);
@@ -402,9 +455,25 @@ public class A35_PowerCompany extends JFrame {
     }
 
     public static void main(String[] args) {
+        String configFile = "config.json";
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        ConfigReader parsedConfig = null;
+        try {
+            parsedConfig = mapper.readValue(new File(configFile), ConfigReader.class);
+            System.out.println("Loaded Company: " + parsedConfig.getCompanyName());
+        } catch (IOException e) {
+            System.err.println("Could not read config.json, using defaults.");
+            e.printStackTrace();
+        }
+
+        final ConfigReader config = parsedConfig;
+
         SwingUtilities.invokeLater(() -> {
-            A35_PowerCompany app = new A35_PowerCompany();
+            A35_PowerCompany app = new A35_PowerCompany(config);
             app.setVisible(true);
         });
     }
 }
+
