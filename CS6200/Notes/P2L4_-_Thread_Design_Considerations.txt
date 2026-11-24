@@ -1,0 +1,7 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-02-01T21:43:12-08:00
+
+====== P2L4 - Thread Design Considerations ======
+Created Sunday 01 February 2026
+

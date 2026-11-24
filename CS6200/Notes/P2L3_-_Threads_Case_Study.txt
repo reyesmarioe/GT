@@ -1,0 +1,9 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2026-02-01T21:03:51-08:00
+
+====== P2L3 - Threads Case Study ======
+Created Sunday 01 February 2026
+
+==== 1. Pthreads Preview ====
+	
