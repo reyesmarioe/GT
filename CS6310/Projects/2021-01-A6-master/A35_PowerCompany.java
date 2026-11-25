@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,6 +43,12 @@ public class A35_PowerCompany extends JFrame {
         @JsonProperty("ElectricEventsPerCycle")
         private int electricEventsPerCycle;
 
+        @JsonProperty("EventsLowConsumer")
+        private int eventsLowConsumer;
+
+        @JsonProperty("EventsHighConsumer")
+        private int eventsHighConsumer;
+
         public String getCompanyName() { 
             return companyName; 
         }
@@ -61,6 +69,12 @@ public class A35_PowerCompany extends JFrame {
         }
         public int getElectricEventsPerCycle() { 
             return electricEventsPerCycle; 
+        }
+        public int getEventsLowConsumer() { 
+            return eventsLowConsumer; 
+        }
+        public int getEventsHighConsumer() { 
+            return eventsHighConsumer; 
         }
     }
 
@@ -130,7 +144,7 @@ public class A35_PowerCompany extends JFrame {
         private final List<Transformer> transformers = new ArrayList<>();
         /*
          * TODO:
-         * Remove this and use read value from config
+         * Remove this and use value from config.json
          */
         public static final int MAX_TRANSFORMERS = 20;
 
@@ -259,13 +273,21 @@ public class A35_PowerCompany extends JFrame {
          * Each customer can generate different electricity events.
          * We'll use this to randomize the number of events for each customer
          */
-        public int randomizeEventsPerCustomer() {
+        public int randomizeEventsPerCustomer(CustomerType customerType) {
             Random rand = new Random();
             int eventsPerCycle = config.getElectricEventsPerCycle() / config.getConsumers().size(); 
+            int randomEvents;
+
+
             System.out.printf("Total events per cycle: %d\n",  config.getElectricEventsPerCycle());
             System.out.printf("Total consumers : %d\n", config.getConsumers().size());
             System.out.printf("Total events per customer: %d\n", eventsPerCycle);
-            int randomEvents = rand.nextInt(eventsPerCycle) + 1;
+            // If LOW_CONSUMER, restrict the number of events to just a few
+            if (customerType == CustomerType.LOW_CONSUMER) {
+                randomEvents = rand.nextInt(config.getEventsLowConsumer()) + 1;
+            } else {
+                randomEvents = rand.nextInt(config.getEventsHighConsumer()) + 1;
+            }
             System.out.printf("Random events per customer: %d\n", randomEvents);
             return randomEvents;
         }
@@ -303,7 +325,7 @@ public class A35_PowerCompany extends JFrame {
     private final List<ApplianceEvent> applianceEvents = new ArrayList<>();
     private final Random random = new Random();
     private int currentCycle = 0;
-    private Timer simTimer;
+    private Timer appRunTimer;
 
     private JTextArea logTextArea;
     private JTextArea consumptionTextArea;
@@ -351,7 +373,8 @@ public class A35_PowerCompany extends JFrame {
          */
         for (int i = 0; i < activeCustomersCount; i++) {
             Customer c = powerCompany.getCustomers().get(random.nextInt(powerCompany.getCustomers().size()));
-            int eventsPerCustomer = powerCompany.randomizeEventsPerCustomer();
+            int eventsPerCustomer = powerCompany.randomizeEventsPerCustomer(c.getType());
+
             /*
              * Need to create several events per customer
              */
@@ -381,12 +404,43 @@ public class A35_PowerCompany extends JFrame {
 
             Employee assigned = powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()));
 
+            // Create the maintenance issue.
             MaintenanceIssue issue = new MaintenanceIssue(currentCycle, event, fixTime, issueCost, assigned);
             powerCompany.logIssue(issue);
             logTextArea.append("  Power System Issue: " + issue + "\n");
         } else {
             logTextArea.append("  Grid Status: No issues reported.\n");
         }
+
+
+        /* 
+         * Add electricity sale activity here
+         *
+         * How to do determine how much electricity each user has?
+         * Do we set a maximum number of kw per user and if low users dont reach that
+         * limit they can sell what's remaining?
+         * I think this would be the best approach.
+         *
+         * So the calculation would be something like:
+         *
+         * Tier1    1000kw @ 1.00
+         * Tier2    1000kw @ 2.00
+         * Tier3           @ 4.00
+         *
+         * LOW USER
+         *      Limit 1000 kw.
+         *      Uses 400 kw @ 1.00/kw
+         *      Sells 600 kw @ 1.00/kw
+         *      
+         * HIGH USER
+         *      Uses 1800 kw (1000kw * 1.00) + (800kw @ 2.00)
+         *      However, it buys 600kw @ 1.00 from LOW USER.
+         *      Pays 200kw @ 2.00
+         *      Total monthly pay is 2000.00
+         *
+         *
+         */
+        
 
         logTextArea.append("\n");
         updateSummaryViews();
@@ -475,21 +529,37 @@ public class A35_PowerCompany extends JFrame {
         mainSplitPane.setRightComponent(rightPanel);
         add(mainSplitPane, BorderLayout.CENTER);
 
-        simTimer = new Timer(1500, e -> runMonthlyCycle());
-
-        startButton.addActionListener(e -> {
-            simTimer.start();
-            startButton.setEnabled(false);
-            stopButton.setEnabled(true);
+        appRunTimer = new Timer(1500, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                runMonthlyCycle();
+            }
         });
 
-        stopButton.addActionListener(e -> {
-            simTimer.stop();
-            startButton.setEnabled(true);
-            stopButton.setEnabled(false);
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                appRunTimer.start();
+                startButton.setEnabled(false);
+                stopButton.setEnabled(true);
+            }
         });
 
-        nextCycleButton.addActionListener(e -> runMonthlyCycle());
+        stopButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                appRunTimer.stop();
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
+            }
+        });
+
+        nextCycleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                runMonthlyCycle();
+            }
+        });
 
         updateSummaryViews();
     }
@@ -510,9 +580,12 @@ public class A35_PowerCompany extends JFrame {
 
         final ConfigReader config = parsedConfig;
 
-        SwingUtilities.invokeLater(() -> {
-            A35_PowerCompany app = new A35_PowerCompany(config);
-            app.setVisible(true);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                A35_PowerCompany app = new A35_PowerCompany(config);
+                app.setVisible(true);
+            }
         });
     }
 }
