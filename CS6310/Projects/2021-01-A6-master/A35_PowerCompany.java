@@ -36,7 +36,7 @@ public class A35_PowerCompany extends JFrame {
         private List<String> employees;
 
         @JsonProperty("SystemEvents")
-        private List<String> systemEvents;
+        private Map<String, Integer> systemEvents;
 
         @JsonProperty("ElectricEventsPerCycle")
         private int electricEventsPerCycle;
@@ -56,7 +56,7 @@ public class A35_PowerCompany extends JFrame {
         public List<String> getEmployees() { 
             return employees; 
         }
-        public List<String> getSystemEvents() { 
+        public Map<String, Integer> getSystemEvents() { 
             return systemEvents; 
         }
         public int getElectricEventsPerCycle() { 
@@ -248,13 +248,17 @@ public class A35_PowerCompany extends JFrame {
         private void initCustomers() {
             int id = 1;
 
-            // Customers are classified at Low and High consumers.
+            // Customers are classified as Low and High consumers.
             for (Map.Entry<String, Integer> entry : config.getConsumers().entrySet()) {
                 CustomerType type = (entry.getValue() == 1) ? CustomerType.HIGH_CONSUMER : CustomerType.LOW_CONSUMER;
                 customers.add(new Customer(id++, entry.getKey(), type));
             }
         }
 
+        /*
+         * Each customer can generate different electricity events.
+         * We'll use this to randomize the number of events for each customer
+         */
         public int randomizeEventsPerCustomer() {
             Random rand = new Random();
             int eventsPerCycle = config.getElectricEventsPerCycle() / config.getConsumers().size(); 
@@ -332,14 +336,19 @@ public class A35_PowerCompany extends JFrame {
         logTextArea.append(String.format("Power Grid Transmission: [%s] -> [Substation #%d] -> [Transformer #%d] -> [Grid]\n",
                     powerCompany.getPowerStation().getName(), sub.getId(), trans.getId()));
 
-        int activeCustomersCount = random.nextInt(Math.min(5, powerCompany.getCustomers().size())) + 1;
+        /* 
+         * Not all customers will use electricity this cycle
+         * We can modify this and have all customers use electricity
+         * in the cycle
+         */
+        int activeCustomersCount = random.nextInt(powerCompany.getCustomers().size()) + 1;
+
         /*
-         * This is the total electricity event that can occurred in a cycle.
+         * This is the total electricity events that can occurred in a cycle.
          * One customer will trigger more than one event.
          * The total of events from all customers will not exceed the total 
          * electricity events.
          */
-        //int eventsPerCycle = config.getElectricEventsPerCycle(); 
         for (int i = 0; i < activeCustomersCount; i++) {
             Customer c = powerCompany.getCustomers().get(random.nextInt(powerCompany.getCustomers().size()));
             int eventsPerCustomer = powerCompany.randomizeEventsPerCustomer();
@@ -360,15 +369,19 @@ public class A35_PowerCompany extends JFrame {
 
         // Create random electricity events/failures or not.
         if (random.nextBoolean()) {
-            List<String> systemEvents = config.getSystemEvents();
+            List<String> systemEvents = new ArrayList(config.getSystemEvents().keySet());
+            String event = systemEvents.get(random.nextInt(systemEvents.size()));
 
-            String issueName = systemEvents.get(random.nextInt(systemEvents.size()));
+            double issueCost = config.getSystemEvents().get(event).doubleValue(); 
+
+            // This is just a random fix time, but shortest time is 15 min.
+            // Maybe we should increase this value?
+            // Overall, it does not affect the performance of the program
             int fixTime = random.nextInt(120) + 15;
-            double fixCost = 150.0 + (random.nextDouble() * 1850.0);
 
             Employee assigned = powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()));
 
-            MaintenanceIssue issue = new MaintenanceIssue(currentCycle, issueName, fixTime, fixCost, assigned);
+            MaintenanceIssue issue = new MaintenanceIssue(currentCycle, event, fixTime, issueCost, assigned);
             powerCompany.logIssue(issue);
             logTextArea.append("  Power System Issue: " + issue + "\n");
         } else {
@@ -431,7 +444,7 @@ public class A35_PowerCompany extends JFrame {
         logTextArea.setEditable(false);
         logTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane logScroll = new JScrollPane(logTextArea);
-        logScroll.setBorder(new TitledBorder("Live Operations & Transmission Log"));
+        logScroll.setBorder(new TitledBorder("Current Electricity Trends"));
         mainSplitPane.setLeftComponent(logScroll);
 
         JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -440,7 +453,7 @@ public class A35_PowerCompany extends JFrame {
         consumptionTextArea.setEditable(false);
         consumptionTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane consScroll = new JScrollPane(consumptionTextArea);
-        consScroll.setBorder(new TitledBorder("Customer Consumption Overview"));
+        consScroll.setBorder(new TitledBorder("Customer Consumption"));
 
         issuesTextArea = new JTextArea();
         issuesTextArea.setEditable(false);
@@ -448,7 +461,7 @@ public class A35_PowerCompany extends JFrame {
         JScrollPane issuesScroll = new JScrollPane(issuesTextArea);
 
         JPanel issuesContainer = new JPanel(new BorderLayout());
-        issuesContainer.setBorder(new TitledBorder("Maintenance & Employee Dispatch Log"));
+        issuesContainer.setBorder(new TitledBorder("Grid Events"));
         issuesContainer.add(issuesScroll, BorderLayout.CENTER);
 
         totalCostLabel = new JLabel("Total Repair Expenses: $0.00");
