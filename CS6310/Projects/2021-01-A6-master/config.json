@@ -1,0 +1,40 @@
+{
+    "CompanyName": "A35 Electric Company",
+    "Owners": [
+        "Mario Reyes",
+        "Ruben Hurtado",
+        "Pierre"
+    ],
+    "Consumers": {
+        "Alice Smith": 0,
+        "Jane Silver": 0,
+        "Dan Silva": 0,
+        "Pat Stewart": 0,
+        "Mary Ortega": 0,
+        "Joe Montana": 1,
+        "Bill Gates": 1,
+        "Michael Jordan": 1,
+        "Elon Musk": 1
+    },
+    "ElectricityEvents": {
+        "Light On": 1,
+        "T.V On": 2,
+        "A.C On": 20,
+        "Washing Machine On": 5
+    },
+    "ElectricEventsPerCycle": 100,
+    "Employees": [
+        "Gregg Spencer",
+        "David Walker",
+        "Mark Armstrong"
+    ],
+    "SystemEvents": {
+        "Cable Rupture":    500,
+        "Substation Surge": 100,
+        "Insulation Fire":  200,
+        "Tree branch short":300
+    }
+}
+
+        
+
