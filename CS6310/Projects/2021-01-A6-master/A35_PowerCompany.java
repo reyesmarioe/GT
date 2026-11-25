@@ -227,25 +227,43 @@ public class A35_PowerCompany extends JFrame {
             // Remove this hardcode name
             this.powerStation = new PowerStation("Station 1");
 
+            // Create Employees
+            //
             initEmployees();
+            // create customers.
             initCustomers();
         }
 
         private void initEmployees() {
-
+                // We should remove this hardcoded value. add to config
+                // file
                 int id = 20;
-                for (String empName : config.getEmployees()) {
-                    employees.add(new Employee(id++, empName));
+                
+                // Total of employees retrieved from config file.
+                for (String employeeName : config.getEmployees()) {
+                    employees.add(new Employee(id++, employeeName));
                 }
             }
 
         private void initCustomers() {
             int id = 1;
 
+            // Customers are classified at Low and High consumers.
             for (Map.Entry<String, Integer> entry : config.getConsumers().entrySet()) {
                 CustomerType type = (entry.getValue() == 1) ? CustomerType.HIGH_CONSUMER : CustomerType.LOW_CONSUMER;
                 customers.add(new Customer(id++, entry.getKey(), type));
             }
+        }
+
+        public int randomizeEventsPerCustomer() {
+            Random rand = new Random();
+            int eventsPerCycle = config.getElectricEventsPerCycle() / config.getConsumers().size(); 
+            System.out.printf("Total events per cycle: %d\n",  config.getElectricEventsPerCycle());
+            System.out.printf("Total consumers : %d\n", config.getConsumers().size());
+            System.out.printf("Total events per customer: %d\n", eventsPerCycle);
+            int randomEvents = rand.nextInt(eventsPerCycle) + 1;
+            System.out.printf("Random events per customer: %d\n", randomEvents);
+            return randomEvents;
         }
 
         public ConfigReader getConfig() { 
@@ -315,21 +333,32 @@ public class A35_PowerCompany extends JFrame {
                     powerCompany.getPowerStation().getName(), sub.getId(), trans.getId()));
 
         int activeCustomersCount = random.nextInt(Math.min(5, powerCompany.getCustomers().size())) + 1;
+        /*
+         * This is the total electricity event that can occurred in a cycle.
+         * One customer will trigger more than one event.
+         * The total of events from all customers will not exceed the total 
+         * electricity events.
+         */
+        //int eventsPerCycle = config.getElectricEventsPerCycle(); 
         for (int i = 0; i < activeCustomersCount; i++) {
             Customer c = powerCompany.getCustomers().get(random.nextInt(powerCompany.getCustomers().size()));
+            int eventsPerCustomer = powerCompany.randomizeEventsPerCustomer();
             /*
-             * Need to create several events, not just one event per customer
+             * Need to create several events per customer
              */
-            ApplianceEvent event = applianceEvents.get(random.nextInt(applianceEvents.size()));
+            do {
+                ApplianceEvent event = applianceEvents.get(random.nextInt(applianceEvents.size()));
 
-            double multiplier = (c.getType() == CustomerType.HIGH_CONSUMER) ? 2.5 : 1.0;
-            double kwUsed = event.getKwUsage() * multiplier;
-            c.consume(kwUsed);
+                double multiplier = (c.getType() == CustomerType.HIGH_CONSUMER) ? 2.5 : 1.0;
+                double kwUsed = event.getKwUsage() * multiplier;
+                c.consume(kwUsed);
 
-            logTextArea.append(String.format("  - %s (%s) used '%s' consuming %.3f kW\n",
-                        c.getName(), c.getType(), event.getName(), kwUsed));
+                logTextArea.append(String.format("  - %s (%s) used '%s' consuming %.3f kW\n",
+                            c.getName(), c.getType(), event.getName(), kwUsed));
+            }while (eventsPerCustomer-- > 0);
         }
 
+        // Create random electricity events/failures or not.
         if (random.nextBoolean()) {
             List<String> systemEvents = config.getSystemEvents();
 
@@ -337,9 +366,7 @@ public class A35_PowerCompany extends JFrame {
             int fixTime = random.nextInt(120) + 15;
             double fixCost = 150.0 + (random.nextDouble() * 1850.0);
 
-            Employee assigned = !powerCompany.getEmployees().isEmpty() 
-                ? powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()))
-                : new Employee(999, "Unassigned Worker");
+            Employee assigned = powerCompany.getEmployees().get(random.nextInt(powerCompany.getEmployees().size()));
 
             MaintenanceIssue issue = new MaintenanceIssue(currentCycle, issueName, fixTime, fixCost, assigned);
             powerCompany.logIssue(issue);
